@@ -16,7 +16,7 @@
 
 #if ARDUINO < 100
 #define SEND(x) send(x) 
-#define RECEIVE receive(x) 
+#define RECEIVE(x) receive(x) 
 #else
 #define SEND(x) write(static_cast<uint8_t>(x))
 #define RECEIVE(x) read(x)
