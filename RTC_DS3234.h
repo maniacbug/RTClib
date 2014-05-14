@@ -15,12 +15,40 @@ public:
     void adjust(const DateTime& dt);
     uint8_t isrunning(void);
     DateTime now();
-
 protected:
     void cs(int _value);
 
+    // control/status register -- might just break out into separate functions though
+    // void DS3234_set_creg(const uint8_t pin, const uint8_t val);
+
+    // temperature register
+    float get_temperature_degC();
+    
+    // alarms
+    // 1
+    void set_alarm_1(const uint8_t s, const uint8_t mi, const uint8_t h, const uint8_t d, const uint8_t * flags);
+    void enable_alarm_1();
+    //void get_alarm_1(const uint8_t pin, char *buf, const uint8_t len);
+    //void clear_a1f(const uint8_t pin);
+    //uint8_t triggered_a1(const uint8_t pin);
+    // 2
+    void set_alarm_2(const uint8_t mi, const uint8_t h, const uint8_t d, const uint8_t * flags);
+    void enable_alarm_2();
+    //void get_alarm_2(const uint8_t pin, char *buf, const uint8_t len);
+    //void clear_a2f(const uint8_t pin);
+    //uint8_t triggered_a2(const uint8_t pin);
+    // Both
+    void enable_alarm(const uint8_t alarm_number); // Sets the bits to enable that alarm's interrupt; may inadvertently disable other alarm...?
+    void clear_alarm_flag(const uint8_t alarm_number); // Clears alarm flags; release pulldown on INTERRUPT pin
+
 private:
     int cs_pin;
+    // Control register -- get and set bits/bytes
+    uint8_t get_addr(const uint8_t addr);
+    void set_addr(const uint8_t addr, const uint8_t val);
+    // Helpers
+    uint8_t dectobcd(const uint8_t);
+    //uint8_t bcdtodec(const uint8_t); // currently unused
 };
 
 #endif // __RTC_DS3234_H__
