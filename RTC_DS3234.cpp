@@ -47,7 +47,7 @@ uint8_t RTC_DS3234::begin(void)
 
     //Ugh!  In order to get this to interop with other SPI devices,
     //This has to be done in cs()
-    SPI.setDataMode(SPI_MODE1);
+    SPI.setDataMode(SPI_MODE3);
 
     //Enable oscillator, disable square wave, alarms
     cs(LOW);
@@ -68,7 +68,7 @@ uint8_t RTC_DS3234::begin(void)
 
 void RTC_DS3234::cs(int _value)
 {
-    SPI.setDataMode(SPI_MODE1);
+    SPI.setDataMode(SPI_MODE3);
     digitalWrite(cs_pin,_value);
 }
 
