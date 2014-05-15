@@ -15,11 +15,6 @@ public:
     void adjust(const DateTime& dt);
     uint8_t isrunning(void);
     DateTime now();
-protected:
-    void cs(int _value);
-
-    // control/status register -- might just break out into separate functions though
-    // void DS3234_set_creg(const uint8_t pin, const uint8_t val);
 
     // temperature register
     float get_temperature_degC();
@@ -40,6 +35,12 @@ protected:
     // Both
     void enable_alarm(const uint8_t alarm_number); // Sets the bits to enable that alarm's interrupt; may inadvertently disable other alarm...?
     void clear_alarm_flag(const uint8_t alarm_number); // Clears alarm flags; release pulldown on INTERRUPT pin
+
+protected:
+    void cs(int _value);
+
+    // control/status register -- might just break out into separate functions though
+    // void DS3234_set_creg(const uint8_t pin, const uint8_t val);
 
 private:
     int cs_pin;
