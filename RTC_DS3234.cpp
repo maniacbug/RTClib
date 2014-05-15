@@ -178,10 +178,37 @@ void RTC_DS3234::clear_alarm_flag(const uint8_t alarm_number)
 {
     uint8_t reg_val;
     cs(LOW);
-    reg_val = get_addr(0x0F) & ~alarm_number;
-    set_addr(0x8F, reg_val);
+    uint8_t addr_in = get_addr(0x0F);
+    reg_val = addr_in & ~alarm_number;
+    set_addr(0x8F, 0);
     cs(HIGH);
 }
+
+/*
+// Old one in case I did something wrong here
+void Logger::DS3234_clear_a1f()
+{
+    uint8_t reg_val;
+
+    DS3234_A1F = 0x1;
+    reg_val = DS3234_get_sreg(CSpinRTC) & ~DS3234_A1F;
+    DS3234_set_sreg(pin, reg_val);
+}
+
+uint8_t Logger::DS3234_get_sreg(const uint8_t pin)
+{
+    uint8_t rv;
+    rv = DS3234_get_addr(pin, 0x0f);
+    return rv;
+}
+
+void DS3234_set_sreg(const uint8_t pin, const uint8_t sreg)
+{
+    DS3234_set_addr(pin, 0x8F, sreg);
+}
+*/
+
+
 
 // Temperature
 float RTC_DS3234::get_temperature_degC()
@@ -209,17 +236,19 @@ float RTC_DS3234::get_temperature_degC()
 uint8_t RTC_DS3234::get_addr(const uint8_t addr)
 {
     uint8_t rv;
-    // no CS here because it is being set outside of this function
+    cs(LOW); // Somehow this is still needed in spite of the fact that this works within other functions that already do this... strange
     SPI.transfer(addr);
     rv = SPI.transfer(0x00);
+    cs(HIGH);
     return rv;
 }
 
 void RTC_DS3234::set_addr(const uint8_t addr, const uint8_t val)
 {
-    // no CS here because it is being set outside of this function
+    cs(LOW); // Somehow this is still needed in spite of the fact that this works within other functions that already do this... strange
     SPI.transfer(addr);
     SPI.transfer(val);
+    cs(HIGH);
 }
 
 // helpers from DS3234 library by Petre Rodan -- just 1 now for setting the
