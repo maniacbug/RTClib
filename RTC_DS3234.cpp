@@ -1,6 +1,9 @@
 // Code by JeeLabs http://news.jeelabs.org/code/
 // Released to the public domain! Enjoy!
 
+// SPI_MODE1 --> SPI_Mode3 by ADW; fails in my test if another SPI device is
+// attached and it is in SPI_MODE1, even if that devices CSpin is OUTPUT, HIGH
+
 #if ARDUINO < 100
 #include <WProgram.h>
 #else
@@ -123,13 +126,13 @@ void RTC_DS3234::set_alarm_1(const uint8_t s, const uint8_t mi, const uint8_t h,
     uint8_t i;
 
     for (i = 0; i <= 3; i++) {
-        digitalWrite(cs_pin, LOW);
+        cs(LOW);
         SPI.transfer(i + 0x87);
         if (i == 3) {
             SPI.transfer(dectobcd(t[3]) | (flags[3] << 7) | (flags[4] << 6));
         } else
             SPI.transfer(dectobcd(t[i]) | (flags[i] << 7));
-        digitalWrite(cs_pin, HIGH);
+        cs(HIGH);
     }
 }
 
@@ -151,12 +154,12 @@ void RTC_DS3234::set_alarm_2(const uint8_t mi, const uint8_t h, const uint8_t d,
 
     for (i = 0; i <= 2; i++) {
         digitalWrite(cs_pin, LOW);
-        SPI.transfer(i + 0x8B);
+        cs(LOW);
         if (i == 2) {
             SPI.transfer(dectobcd(t[2]) | (flags[2] << 7) | (flags[3] << 6));
         } else
             SPI.transfer(dectobcd(t[i]) | (flags[i] << 7));
-        digitalWrite(cs_pin, HIGH);
+        cs(HIGH);
     }
 }
 
@@ -165,15 +168,19 @@ void RTC_DS3234::enable_alarm(const uint8_t alarm_number)
 // and 2, which are also decimal 1 and 2: so just pass the number of that alarm
 // INTCN is the interrupt enable bit
 {
+    cs(LOW);
     set_addr(0x8E, INTCN | alarm_number);
+    cs(HIGH);
 }
 
 // when the alarm flag is cleared the pulldown on INT is also released
 void RTC_DS3234::clear_alarm_flag(const uint8_t alarm_number)
 {
     uint8_t reg_val;
+    cs(LOW);
     reg_val = get_addr(0x0F) & ~alarm_number;
     set_addr(0x8F, reg_val);
+    cs(HIGH);
 }
 
 // Temperature
@@ -183,8 +190,10 @@ float RTC_DS3234::get_temperature_degC()
     uint8_t temp_msb, temp_lsb;
     int8_t nint;
 
+    cs(LOW);
     temp_msb = get_addr(0x11);
     temp_lsb = get_addr(0x12) >> 6;
+    cs(HIGH);
     if ((temp_msb & 0x80) != 0)
         nint = temp_msb | ~((1 << 8) - 1);      // if negative get two's complement
     else
@@ -200,20 +209,17 @@ float RTC_DS3234::get_temperature_degC()
 uint8_t RTC_DS3234::get_addr(const uint8_t addr)
 {
     uint8_t rv;
-
-    digitalWrite(cs_pin, LOW);
+    // no CS here because it is being set outside of this function
     SPI.transfer(addr);
     rv = SPI.transfer(0x00);
-    digitalWrite(cs_pin, HIGH);
     return rv;
 }
 
 void RTC_DS3234::set_addr(const uint8_t addr, const uint8_t val)
 {
-    digitalWrite(cs_pin, LOW);
+    // no CS here because it is being set outside of this function
     SPI.transfer(addr);
     SPI.transfer(val);
-    digitalWrite(cs_pin, HIGH);
 }
 
 // helpers from DS3234 library by Petre Rodan -- just 1 now for setting the
