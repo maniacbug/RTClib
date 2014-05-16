@@ -129,9 +129,9 @@ void RTC_DS3234::set_alarm_1(const uint8_t s, const uint8_t mi, const uint8_t h,
         cs(LOW);
         SPI.transfer(i + 0x87);
         if (i == 3) {
-            SPI.transfer(dectobcd(t[3]) | (flags[3] << 7) | (flags[4] << 6));
+            SPI.transfer(decToBcd(t[3]) | (flags[3] << 7) | (flags[4] << 6));
         } else
-            SPI.transfer(dectobcd(t[i]) | (flags[i] << 7));
+            SPI.transfer(decToBcd(t[i]) | (flags[i] << 7));
         cs(HIGH);
     }
 }
@@ -156,9 +156,9 @@ void RTC_DS3234::set_alarm_2(const uint8_t mi, const uint8_t h, const uint8_t d,
         digitalWrite(cs_pin, LOW);
         cs(LOW);
         if (i == 2) {
-            SPI.transfer(dectobcd(t[2]) | (flags[2] << 7) | (flags[3] << 6));
+            SPI.transfer(decToBcd(t[2]) | (flags[2] << 7) | (flags[3] << 6));
         } else
-            SPI.transfer(dectobcd(t[i]) | (flags[i] << 7));
+            SPI.transfer(decToBcd(t[i]) | (flags[i] << 7));
         cs(HIGH);
     }
 }
@@ -251,10 +251,10 @@ void RTC_DS3234::set_addr(const uint8_t addr, const uint8_t val)
     cs(HIGH);
 }
 
-// helpers from DS3234 library by Petre Rodan -- just 1 now for setting the
-// alarms
+// helpers modified from the DS3234 library by Petre Rodan and the DS3231 
+// library by Eric Ayars -- just 1 now for setting the alarms
 
-uint8_t RTC_DS3234::dectobcd(const uint8_t val)
+uint8_t RTC_DS3234::decToBcd(const uint8_t val)
 {
     return ((val / 10 * 16) + (val % 10));
 }
@@ -268,6 +268,102 @@ uint8_t RTC_DS3234::bcdtodec(const uint8_t val)
 */
 
 // end helpers
+
+// Clock-setting-related functions, based on Eric Ayars' DS3231 library
+// and Andy Wickert's work with it for the ALog Bottle Logger
+
+void RTC_DS3234::setClockMode(bool h12) {
+    // sets the mode to 12-hour (true) or 24-hour (false).
+    // One thing that bothers me about how I've written this is that
+    // if the read and right happen at the right hourly millisecnd,
+    // the clock will be set back an hour. Not sure how to do it better, 
+    // though, and as long as one doesn't set the mode frequently it's
+    // a very minimal risk. 
+    // It's zero risk if you call this BEFORE setting the hour, since
+    // the setHour() function doesn't change this mode.
+
+    uint8_t temp_buffer;
+
+    cs(LOW);
+    // Start by reading byte 0x02.
+    temp_buffer = get_addr(0x02);
+    // Set the flag to the requested value:
+    if (h12) {
+    temp_buffer = temp_buffer | 0x01000000;
+    }
+    else {
+    temp_buffer = temp_buffer & 0x10111111;
+    }
+    // Write the byte
+    set_addr(0x02, temp_buffer);
+    cs(HIGH);
+
+}
+
+void RTC_DS3234::setSecond(byte Second) {
+    // Sets the seconds 
+    // This function also resets the Oscillator Stop Flag, which is set
+    // whenever power is interrupted.
+    set_addr(0x80, decToBcd(Second));
+    // Clear oscillator stop flag
+    byte temp_buffer = get_addr(0x0F); // read the control byte
+    set_addr(0x8F, temp_buffer & 0b01111111);
+}
+
+void RTC_DS3234::setMinute(uint8_t Minute) {
+	  // Sets the minutes 
+    set_addr(0x81, decToBcd(Minute));
+}
+
+void RTC_DS3234::setHour(uint8_t Hour) {
+    // Sets the hour, without changing 12/24h mode.
+    // The hour must be in 24h format.
+
+    // Start by figuring out what the 12/24 mode is
+    bool h12 = get_addr(0x02) & 0b01000000;
+    // if h12 is true, it's 12h mode; false is 24h.
+
+    if (h12) {
+        // 12 hour
+        if (Hour > 12)
+        {
+	        Hour = decToBcd(Hour-12) | 0b01100000;
+        }
+        else
+        {
+	        Hour = decToBcd(Hour) & 0b11011111;
+        }
+    }
+    else
+    {
+        // 24 hour
+        Hour = decToBcd(Hour) & 0b10111111;
+    }
+
+    set_addr(0x82, decToBcd(Hour));
+}
+
+void RTC_DS3234::setDoW(uint8_t DoW) {
+    // Sets the Day of Week
+    set_addr(0x83, decToBcd(DoW));
+}
+
+void RTC_DS3234::setDate(uint8_t Date) {
+	// Sets the Date
+    set_addr(0x84, decToBcd(Date));
+}
+
+void RTC_DS3234::setMonth(uint8_t Month) {
+    // Sets the month
+    set_addr(0x85, decToBcd(Month));
+}
+
+void RTC_DS3234::setYear(uint8_t Year) {
+    // Sets the year
+    set_addr(0x86, decToBcd(Year));
+}
+
+// End clock-setting functions based on Eric Ayars' DS3231 library
 
 DateTime RTC_DS3234::now()
 {

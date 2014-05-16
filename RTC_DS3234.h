@@ -36,6 +36,30 @@ public:
     void enable_alarm(const uint8_t alarm_number); // Sets the bits to enable that alarm's interrupt; may inadvertently disable other alarm...?
     void clear_alarm_flag(const uint8_t alarm_number); // Clears alarm flags; release pulldown on INTERRUPT pin
 
+		// Time-setting functions
+		// Note that none of these check for sensibility: You can set the
+		// date to July 42nd and strange things will probably result.
+		
+		void setSecond(uint8_t Second); 
+			// In addition to setting the seconds, this clears the 
+			// "Oscillator Stop Flag".
+		void setMinute(uint8_t Minute); 
+			// Sets the minute
+		void setHour(uint8_t Hour); 
+			// Sets the hour
+		void setDoW(uint8_t DoW); 
+			// Sets the Day of the Week (1-7);
+		void setDate(uint8_t Date); 
+			// Sets the Date of the Month
+		void setMonth(uint8_t Month); 
+			// Sets the Month of the year
+		void setYear(uint8_t Year); 
+			// Last two digits of the year
+		void setClockMode(bool h12); 
+			// Set 12/24h mode. True is 12-h, false is 24-hour.
+    
+    
+
 protected:
     void cs(int _value);
 
@@ -48,7 +72,7 @@ private:
     uint8_t get_addr(const uint8_t addr);
     void set_addr(const uint8_t addr, const uint8_t val);
     // Helpers
-    uint8_t dectobcd(const uint8_t);
+    uint8_t decToBcd(const uint8_t);
     //uint8_t bcdtodec(const uint8_t); // currently unused
 };
 
