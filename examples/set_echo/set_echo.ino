@@ -12,7 +12,7 @@ Andy Wickert
 
 Ported to the DS3234, using my modification of RTClib
 Contribs in backwards order through time:
-Andy Wickert, maniacbug, Petre Rodan, jeelabs, adafruit
+Andy Wickert, maniacbug, Petre Rodan, adafruit, jeelabs
 5/16/2014 -- whoa, 3 years already!
 
 */
