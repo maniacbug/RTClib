@@ -340,7 +340,7 @@ void RTC_DS3234::setHour(uint8_t Hour) {
         Hour = decToBcd(Hour) & 0b10111111;
     }
 
-    set_addr(0x82, decToBcd(Hour));
+    set_addr(0x82, Hour);
 }
 
 void RTC_DS3234::setDoW(uint8_t DoW) {
